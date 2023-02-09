@@ -1,0 +1,65 @@
+Sub VerificaSeChegouPalavraEmail()
+
+    Dim oAllItems As Object 'Outlook.Items
+    Dim oFilteredItems As Object 'Outlook.Items
+    Dim oFilteredItemsB As Object
+    Dim oFilteredItemsResult As Integer
+    Dim oOutlook As Object 'Outlook.Application
+    Dim sFilter As String
+    Dim sFilterB As String
+    Dim minhaPasta As Object
+    Dim objNSpace As Object
+    Dim sSubject As String
+    Dim ws As Excel.Worksheet
+    
+    Set oOutlook = pGetOutlook
+    If oOutlook Is Nothing Then
+          MsgBox "Não foi possível inicializar o Outlook!", vbCritical
+          Exit Sub
+    End If
+    
+    'Para abrir a caixa de entrada do outlook
+    Set objNSpace = oOutlook.GetNamespace("MAPI")
+    Set minhaPasta = objNSpace.GetDefaultFolder(olFolderInbox)
+    
+    'Altere o endereço da planilha conforme desejado:
+    Set ws = Planilha4
+    
+    linha = 3
+    
+    'Percorre as linhas para pesquisar a palavra-chave
+    While Cells(linha, 20) <> ""
+        'Altere aqui o endereço da célula que possui o assunto a pesquisar:
+        sSubject = ws.Cells(linha, 20)
+        sFilter = "@SQL=" & Chr(34) & "urn:schemas:httpmail:subject" & Chr(34) & " LIKE " & "'%" & sSubject & "%'"
+        sFilterB = "@SQL=" & Chr(34) & "urn:schemas:httpmail:textdescription" & Chr(34) & " ci_phrasematch " & "'%" & sSubject & "%'"
+
+        'Pesquisa no assunto e no corpo do e-mail
+        Set oAllItems = minhaPasta.Items
+        Set oFilteredItems = oAllItems.Restrict(sFilter)
+        Set oFilteredItemsB = oAllItems.Restrict(sFilterB)
+
+        'Mostra a quantidade de vezes que aquela palavra apareceu
+        oFilteredItemsResult = oFilteredItems.Count + oFilteredItemsB.Count
+        
+        'Altere aqui onde será mostrado a quantidade de e-mails com essa palavra(s) foi encontrado:
+        ws.Cells(linha, 21) = oFilteredItemsResult
+        
+        linha = linha + 1
+    Wend
+    
+    
+End Sub
+
+Private Function pGetOutlook() As Object 'Outlook.Application
+  
+    Dim oOutlook As Object 'Outlook.Application
+    
+    On Error Resume Next
+    Set oOutlook = GetObject(, "Outlook.Application")
+    If oOutlook Is Nothing Then
+        Set oOutlook = CreateObject("Outlook.Application")
+    End If
+
+    Set pGetOutlook = oOutlook
+End Function
